@@ -4,6 +4,10 @@
 
 데이터통신 강의 운영 도구로 만들어진 프로젝트입니다. Slido 같은 기존 서비스보다 훨씬 가벼우면서도, 한국 대학 강의 환경에 필요한 부분만 정밀하게 다듬은 것이 특징입니다.
 
+- **배포**: https://lecture-qna-kappa.vercel.app
+- **학생 진입**: https://lecture-qna-kappa.vercel.app/
+- **교수 관리**: https://lecture-qna-kappa.vercel.app/admin
+
 ---
 
 ## 핵심 가치
@@ -183,12 +187,10 @@ npm run dev -- -H 0.0.0.0
 
 ## 배포
 
-Vercel에 자동 배포되어 있습니다. `main` 브랜치에 push하면 자동으로 프로덕션 배포됩니다.
+Vercel에 호스팅됩니다.
 
-```bash
-# 수동 배포
-npx vercel --prod
-```
+- **프로덕션**: https://lecture-qna-kappa.vercel.app
+- **수동 배포**: `npx vercel --prod`
 
 ---
 
