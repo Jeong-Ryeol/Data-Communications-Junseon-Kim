@@ -1,65 +1,91 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { isValidCode, normalizeCode } from '@/lib/code';
+
+function HomeInner() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const [code, setCode] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  // QR로 들어왔으면 자동 채움 + 자동 입장
+  useEffect(() => {
+    const c = params?.get('c');
+    if (!c) return;
+    const norm = normalizeCode(c);
+    if (isValidCode(norm)) {
+      router.replace(`/session/${norm}`);
+    }
+  }, [params, router]);
+
+  function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    const norm = normalizeCode(code);
+    if (!isValidCode(norm)) {
+      setError('영문/숫자 6자리예요');
+      return;
+    }
+    router.push(`/session/${norm}`);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-dvh flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-sm flex flex-col items-center gap-10">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 ring-1 ring-indigo-400/20 px-3 py-1 text-xs text-indigo-300">
+            <span className="size-1.5 rounded-full bg-indigo-400 animate-pulse-glow" />
+            익명 보장
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight">강의실 QnA</h1>
+          <p className="text-sm text-neutral-400 leading-relaxed">
+            학번 / 이름 / IP 어디에도 저장하지 않아요.<br />
+            누가 누군지 아무도 몰라요.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <form onSubmit={onSubmit} className="w-full flex flex-col gap-4">
+          <input
+            value={code}
+            onChange={(e) => {
+              setCode(normalizeCode(e.target.value));
+              setError(null);
+            }}
+            inputMode="text"
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="6자리 코드"
+            className="w-full text-center text-3xl tracking-[0.4em] font-mono uppercase bg-neutral-900/70 border border-neutral-800 rounded-2xl py-6 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition placeholder:text-neutral-700"
+            maxLength={6}
+            aria-label="세션 코드"
+          />
+          {error && (
+            <p className="text-sm text-rose-400 text-center -mt-1">{error}</p>
+          )}
+          <button
+            type="submit"
+            disabled={code.length < 6}
+            className="rounded-2xl bg-indigo-500 hover:bg-indigo-400 disabled:bg-neutral-800 disabled:text-neutral-500 active:scale-[0.98] transition py-4 text-lg font-medium"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            입장
+          </button>
+        </form>
+
+        <p className="text-xs text-neutral-500 text-center leading-relaxed">
+          교수님이 수업을 시작해야 입장할 수 있어요.<br />
+          QR 코드를 찍으면 자동으로 입장돼요.
+        </p>
+      </div>
+    </main>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<main className="min-h-dvh" />}>
+      <HomeInner />
+    </Suspense>
   );
 }

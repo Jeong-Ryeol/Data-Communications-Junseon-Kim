@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 모든 쓰기는 Admin SDK(API Route)에서. 클라이언트는 read만.
+    match /sessions/{sessionId} {
+      allow read: if true;
+      allow write: if false;
+
+      match /questions/{qid} {
+        allow read: if true;
+        allow write: if false;
+      }
+
+      match /pulse/{fp} {
+        allow read: if true;
+        allow write: if false;
+      }
+
+      match /polls/{pid} {
+        allow read: if true;
+        allow write: if false;
+
+        match /votes/{fp} {
+          allow read: if true;
+          allow write: if false;
+        }
+      }
+    }
+  }
+}

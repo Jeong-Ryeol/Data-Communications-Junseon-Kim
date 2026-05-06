@@ -1,36 +1,202 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 강의실 익명 QnA
 
-## Getting Started
+> 대학 강의실에서 학생들이 익명으로 질문을 올리고, 교수님이 본인 기기에서 실시간으로 받아보는 라이브 QnA 웹앱
 
-First, run the development server:
+데이터통신 강의 운영 도구로 만들어진 프로젝트입니다. Slido 같은 기존 서비스보다 훨씬 가벼우면서도, 한국 대학 강의 환경에 필요한 부분만 정밀하게 다듬은 것이 특징입니다.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 핵심 가치
+
+- **완전한 익명성** — 학번·이름·이메일·IP 어디에도 저장하지 않습니다. 학생 식별은 브라우저에 저장되는 무작위 UUID 한 줄뿐.
+- **추천 시스템 중심** — 같은 의문을 가진 학생들이 좋아요를 누르면 위로 올라옵니다. 교수님은 "다들 궁금해하는 질문"부터 효율적으로 답변할 수 있습니다.
+- **교실 모니터 노출 금지** — 칠판/프로젝터에 띄우는 용도가 아닙니다. 교수님 본인 기기(노트북/태블릿/폰)에서만 모더레이션합니다. 다만 강의 시작 시점엔 입장 QR을 잠깐 띄울 수 있습니다.
+
+---
+
+## 빠른 사용법
+
+### 교수님 (강의 시작 전)
+1. `/admin` 접속 → 비밀번호 입장
+2. **새 세션 시작** 버튼 → 세션 제목 입력 (예: "데이터통신 5주차")
+3. 운영 화면에서 좌상단 **QR 버튼** → 칠판/프로젝터에 잠깐 띄움
+4. 학생들이 입장하면 QR 닫기
+
+### 학생 (입장)
+- QR 코드 스캔 → 자동 입장 OR 6자리 코드 직접 입력
+- 한 사람당 1초 만에 입장. 회원가입·로그인 없음
+
+### 강의 중 운영
+- **질문 받기** — 학생이 올린 질문이 추천 많은 순서로 정렬됨. 위에서부터 답변
+- **답변 완료** ✓ 클릭 — 카드가 회색으로 내려감. 메모 한 줄 추가 가능 (학생들 강의 후 복습용)
+- **이해도 체크** — 즉석에서 "지금 이해되시나요?" 띄우기. 학생들 폰에 모달로 떠서 1초 안에 응답. 교수님만 결과 봄
+- **라이브 투표** — 객관식 즉석 출제 (2~5개 보기). 결과 라이브 공개 여부 토글로 결정
+- **검수 모드** ON — 신규 질문이 통과 후에만 다른 학생들에게 보임 (대규모 강의 / 첫 운영 시 추천)
+
+### 강의 종료
+- **종료** 버튼 클릭 → 학생 즉시 차단. 다시 켤 수도 있음
+
+---
+
+## 트롤·도배 방지
+
+여러 단계로 막아 두었습니다:
+
+| 단계 | 작동 방식 |
+|------|-----------|
+| 길이 검증 | 1~200자 외 거부 |
+| 정적 비속어 필터 | 직접 욕설 + 자모 분리 우회 (`ㅅㅂ`, `시 발`) |
+| AI 모더레이션 | Google Gemini가 한국어 맥락에서 욕설/도배/광고/타인 비방 자동 분류 (껐다 켤 수 있음) |
+| Rate limit | 같은 사용자 1분에 1회 (테스트 중엔 5초로 임시 조정) |
+| 작성자 차단 | 교수님이 카드 1개에서 "삭제+차단" — 그 글 삭제 + 그 학생 작성·추천·투표 모두 차단 |
+| 차단 목록 | 차단된 학생은 별도 패널에 모여있음. 한 번 클릭으로 해제 가능 |
+
+> **AI 한도 초과** 시 교수님 화면에 "AI 한도초과" 경고 자동 표시. 정적 필터는 그대로 동작.
+
+---
+
+## 익명성에 대해
+
+- 학생 식별 = 브라우저 `localStorage`에 저장된 UUID 한 줄. 서버는 이 UUID만 알고, 그 UUID가 누구인지는 누구도 모릅니다.
+- 같은 사람이 화면을 끄거나 폰을 재부팅해도 같은 UUID가 남아있어 같은 학생으로 인식됩니다.
+- 시크릿 모드 / 데이터 삭제 / 다른 기기 접속 시엔 새 사용자로 잡힙니다 (트롤 방지의 trade-off).
+- 교수님 운영 화면에서만 학생을 `학생#37` 같은 임시 번호로 봅니다. 학생들끼리는 서로 못 봅니다.
+- 학생 본인은 본인 번호를 봅니다 — "내 질문 어디 갔지?" 추적용.
+
+---
+
+## 기술 스택
+
+| 영역 | 사용 기술 | 비용 |
+|------|-----------|------|
+| 프레임워크 | Next.js 16 (App Router) + React 19 + TypeScript | - |
+| 스타일링 | Tailwind CSS 4 + Pretendard | - |
+| DB | Firebase Firestore (Spark 무료 플랜) | 무료 |
+| AI 모더레이션 | Google Gemini 1.5 Flash Lite | 무료 |
+| 호스팅 | Vercel Hobby | 무료 |
+
+데이터통신 강의 한 학기(주 1회 × 16주, 학생 50명) 운영 시 모든 서비스의 무료 한도 안에 들어옵니다. 카드 등록 없이 운영 가능.
+
+---
+
+## 프로젝트 구조
+
+```
+lecture-qna/
+├── app/
+│   ├── page.tsx                       # 학생 진입 (코드 입력 / QR 자동 입장)
+│   ├── session/[code]/page.tsx        # 학생 보드 (질문/추천/투표)
+│   ├── admin/page.tsx                 # 교수 로그인 + 세션 목록
+│   ├── admin/session/[id]/page.tsx    # 교수 운영 화면
+│   └── api/                           # 서버 API (모든 쓰기 처리)
+│       ├── admin/                     #   교수 액션 (로그인/세션생성/차단)
+│       ├── sessions/                  #   세션 입장/상태변경
+│       ├── questions/                 #   질문 작성/추천/삭제/모더레이션
+│       └── polls/                     #   라이브 투표
+├── components/
+│   ├── QuestionCard.tsx               # 질문 카드 (학생/교수 공용)
+│   ├── PollOverlay.tsx                # 투표 모달 (학생 보는 화면)
+│   ├── CategoryPicker.tsx             # 카테고리 칩
+│   └── QrModal.tsx                    # QR 큰 화면 (입장 시점만 사용)
+├── lib/
+│   ├── firebase.ts                    # 클라이언트 SDK (read 전용)
+│   ├── firebase-admin.ts              # 서버 SDK (모든 write 처리)
+│   ├── gemini.ts                      # AI 모더레이션 호출
+│   ├── auth.ts                        # 교수 비밀번호 검증 (HMAC 쿠키)
+│   ├── code.ts                        # 6자리 영숫자 세션 코드 (혼동글자 제외)
+│   ├── profanity.ts                   # 정적 비속어 필터
+│   ├── fingerprint.ts                 # localStorage UUID 발급
+│   └── types.ts                       # 공통 타입 정의
+├── firestore.rules                    # Firestore 보안 규칙
+└── .env.example                       # 환경변수 템플릿
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 데이터 모델 (Firestore)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+sessions/{code}                                 # 세션 (코드가 곧 doc ID)
+sessions/{code}/questions/{qid}                 # 질문
+sessions/{code}/polls/{pid}                     # 라이브 투표
+sessions/{code}/polls/{pid}/votes/{fingerprint} # 투표 응답
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 보안 모델
 
-## Learn More
+- **Firestore Rules**: 클라이언트 직접 write 전부 차단. 모든 쓰기는 Next.js API Route에서 Admin SDK로만 처리.
+- **교수 인증**: 환경변수의 비밀번호와 constant-time 비교 → HMAC 서명 쿠키 발급 (7일 유효).
+- **학생 fingerprint**: 인증되지 않음 (UUID는 위조 가능). 차단 우회 가능 (시크릿 모드/캐시 삭제). 익명성과 trade-off — 의도된 설계.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 디테일 설계 결정
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+설계 과정에서 명시적으로 선택한 부분들:
 
-## Deploy on Vercel
+- **세션 코드 형식** — 영숫자 6자, 혼동 글자(0/O/1/I/L) 제외 → 약 24억 조합. 종이에 적어 부르거나 스크린에 띄울 때 오타 줄임.
+- **추천 동률 처리** — 같은 추천 수면 **오래된 순**으로 위. "오래 답변 안 된 핫이슈"가 부각되도록.
+- **답변 완료 후 카드** — 화면 끝으로 + 회색. 답변 메모(선택)는 강의 후 복습용.
+- **검수 모드 학생 UX** — 검수 ON일 때 본인 대기 질문은 본인에게만 즉시 보임 ("검토 중" 라벨). 안 그러면 "내 글 어디 갔지?" 도배 발생.
+- **이해도 체크 결과 비공개 기본값** — 학생이 다른 학생들의 응답 보고 따라가는 동조 효과(군중심리) 회피. 교수님만 보면 됨.
+- **모더레이션 액션 모두 토글** — 답변/숨김/차단 다시 누르면 되돌림. 실수 복구 비용 최소화.
+- **30초 grace 자기 질문 삭제** — 추천 0이고 30초 이내일 때만 학생 본인이 자기 질문 삭제 가능. 부끄러워서 질문 자체 안 올리는 위축 효과 방지.
+- **AI 모더레이션 toggle** — 가끔 AI가 정상 질문을 거부하는 경우가 있을 수 있어서 교수님이 그 세션에서 끌 수 있음. 정적 욕필터는 그대로.
+- **fingerprint → 학생#N 매핑** — 세션마다 새 번호 부여. 학기 전체 동일 학생이라도 매주 새 번호. 추적 어렵게.
+- **새 질문 탭 뱃지** — 교수님이 강의 중 다른 화면 봐도 알아채도록 브라우저 탭 제목에 `(3)` 같은 카운트.
+- **모바일 동등 우선** — 교수님 운영 화면도 폰에서 완전히 사용 가능. 칠판 옆에서 폰만 들고 운영 가능.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 로컬 실행 (개발자용)
+
+```bash
+# 1. 의존성 설치
+npm install
+
+# 2. 환경변수 설정
+cp .env.example .env.local
+# .env.local 열어서 Firebase / Gemini / 비밀번호 채우기
+
+# 3. 개발 서버
+npm run dev
+```
+
+같은 wifi에서 폰으로 테스트하려면:
+```bash
+npm run dev -- -H 0.0.0.0
+# 폰 브라우저에서 http://[맥의 IP]:3000
+```
+
+### 필요한 외부 서비스 셋업
+
+1. **Firebase** ([console.firebase.google.com](https://console.firebase.google.com/))
+   - 프로젝트 생성 → Firestore Database 활성화 (서울 리전 권장)
+   - 웹 앱 등록 → `firebaseConfig` 6개 값 → `.env.local`의 `NEXT_PUBLIC_FIREBASE_*`
+   - 서비스 계정 → 비공개 키 JSON → `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY`
+   - Firestore 규칙 → `firestore.rules` 내용 복사해서 게시
+
+2. **Gemini API** ([aistudio.google.com/apikey](https://aistudio.google.com/apikey))
+   - API 키 생성 → `GEMINI_API_KEY`
+
+3. **교수 비밀번호** — 본인이 정함 → `ADMIN_PASSWORD`
+
+---
+
+## 배포
+
+Vercel에 자동 배포되어 있습니다. `main` 브랜치에 push하면 자동으로 프로덕션 배포됩니다.
+
+```bash
+# 수동 배포
+npx vercel --prod
+```
+
+---
+
+## 만들지 않은 것 (의도적)
+
+- 회원가입 / 소셜 로그인 — 익명성 원칙과 충돌
+- 댓글 / 대댓글 / DM — 학생 간 상호작용은 별도 채널
+- 이미지·파일 업로드 — 트롤 표면 늘어남, 강의 핵심 가치 아님
+- 푸시 알림 — 학생 화면 침투 부담
+- 다국어 — 한국 대학 강의 환경에 특화
+- 강의 종료 후 read-only 다시보기 — 익명성 보존이 우선 (필요 시 추가 가능)
