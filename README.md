@@ -14,7 +14,6 @@
 
 - **완전한 익명성** — 학번·이름·이메일·IP 어디에도 저장하지 않습니다. 학생 식별은 브라우저에 저장되는 무작위 UUID 한 줄뿐.
 - **추천 시스템 중심** — 같은 의문을 가진 학생들이 좋아요를 누르면 위로 올라옵니다. 교수님은 "다들 궁금해하는 질문"부터 효율적으로 답변할 수 있습니다.
-- **교실 모니터 노출 금지** — 칠판/프로젝터에 띄우는 용도가 아닙니다. 교수님 본인 기기(노트북/태블릿/폰)에서만 모더레이션합니다. 다만 강의 시작 시점엔 입장 QR을 잠깐 띄울 수 있습니다.
 
 ---
 
@@ -85,35 +84,50 @@
 
 ## 프로젝트 구조
 
+```mermaid
+graph LR
+  Root["📁 lecture-qna"]
+
+  Root --> App["📁 app/"]
+  Root --> Comp["📁 components/"]
+  Root --> Lib["📁 lib/"]
+  Root --> Cfg["⚙️ firestore.rules<br/>⚙️ .env.example"]
+
+  App --> Pages["🖥️ 페이지"]
+  App --> API["🔌 api/<br/>(서버 API · 모든 쓰기 처리)"]
+
+  Pages --> P1["page.tsx<br/>학생 진입"]
+  Pages --> P2["session/[code]/page.tsx<br/>학생 보드"]
+  Pages --> P3["admin/page.tsx<br/>교수 로그인"]
+  Pages --> P4["admin/session/[id]/page.tsx<br/>교수 운영"]
+
+  API --> A1["admin/<br/>로그인 · 세션생성 · 차단"]
+  API --> A2["sessions/<br/>입장 · 상태변경"]
+  API --> A3["questions/<br/>작성 · 추천 · 모더레이션"]
+  API --> A4["polls/<br/>라이브 투표"]
+
+  Comp --> CC1["QuestionCard<br/>질문 카드"]
+  Comp --> CC2["PollOverlay<br/>투표 모달"]
+  Comp --> CC3["CategoryPicker<br/>카테고리 칩"]
+  Comp --> CC4["QrModal<br/>입장 QR"]
+
+  Lib --> L1["firebase.ts<br/>클라이언트 SDK<br/>(read 전용)"]
+  Lib --> L2["firebase-admin.ts<br/>서버 SDK<br/>(모든 write)"]
+  Lib --> L3["gemini.ts<br/>AI 모더레이션"]
+  Lib --> L4["auth.ts<br/>HMAC 쿠키 인증"]
+  Lib --> L5["code.ts<br/>profanity.ts<br/>fingerprint.ts<br/>types.ts"]
+
+  classDef pages fill:#1e293b,stroke:#6366f1,stroke-width:2px,color:#fff
+  classDef api fill:#312e81,stroke:#818cf8,color:#fff
+  classDef comp fill:#1f2937,stroke:#10b981,color:#fff
+  classDef lib fill:#1c1917,stroke:#f59e0b,color:#fff
+  class P1,P2,P3,P4 pages
+  class A1,A2,A3,A4 api
+  class CC1,CC2,CC3,CC4 comp
+  class L1,L2,L3,L4,L5 lib
 ```
-lecture-qna/
-├── app/
-│   ├── page.tsx                       # 학생 진입 (코드 입력 / QR 자동 입장)
-│   ├── session/[code]/page.tsx        # 학생 보드 (질문/추천/투표)
-│   ├── admin/page.tsx                 # 교수 로그인 + 세션 목록
-│   ├── admin/session/[id]/page.tsx    # 교수 운영 화면
-│   └── api/                           # 서버 API (모든 쓰기 처리)
-│       ├── admin/                     #   교수 액션 (로그인/세션생성/차단)
-│       ├── sessions/                  #   세션 입장/상태변경
-│       ├── questions/                 #   질문 작성/추천/삭제/모더레이션
-│       └── polls/                     #   라이브 투표
-├── components/
-│   ├── QuestionCard.tsx               # 질문 카드 (학생/교수 공용)
-│   ├── PollOverlay.tsx                # 투표 모달 (학생 보는 화면)
-│   ├── CategoryPicker.tsx             # 카테고리 칩
-│   └── QrModal.tsx                    # QR 큰 화면 (입장 시점만 사용)
-├── lib/
-│   ├── firebase.ts                    # 클라이언트 SDK (read 전용)
-│   ├── firebase-admin.ts              # 서버 SDK (모든 write 처리)
-│   ├── gemini.ts                      # AI 모더레이션 호출
-│   ├── auth.ts                        # 교수 비밀번호 검증 (HMAC 쿠키)
-│   ├── code.ts                        # 6자리 영숫자 세션 코드 (혼동글자 제외)
-│   ├── profanity.ts                   # 정적 비속어 필터
-│   ├── fingerprint.ts                 # localStorage UUID 발급
-│   └── types.ts                       # 공통 타입 정의
-├── firestore.rules                    # Firestore 보안 규칙
-└── .env.example                       # 환경변수 템플릿
-```
+
+> **클라이언트 / 서버 경계**: `lib/firebase.ts`(클라)는 read만 가능 (Firestore 보안 규칙으로 강제). 모든 쓰기는 `app/api/*`의 Route Handler가 `firebase-admin.ts`로 처리.
 
 ### 데이터 모델 (Firestore)
 
