@@ -4,9 +4,11 @@
 
 데이터통신 강의 운영 도구로 만들어진 프로젝트입니다. Slido 같은 기존 서비스보다 훨씬 가벼우면서도, 한국 대학 강의 환경에 필요한 부분만 정밀하게 다듬은 것이 특징입니다.
 
-- **배포**: https://lecture-qna-kappa.vercel.app
-- **학생 진입**: https://lecture-qna-kappa.vercel.app/
-- **교수 관리**: https://lecture-qna-kappa.vercel.app/admin
+| 화면 | 주소 | 비밀번호 |
+|------|------|---------|
+| 학생 진입 | https://lecture-qna-kappa.vercel.app/ | 없음 (익명) |
+| 교수 관리 | https://lecture-qna-kappa.vercel.app/admin | `4870` |
+| GitHub | https://github.com/Jeong-Ryeol/Data-Communications-Junseon-Kim | — |
 
 ---
 
