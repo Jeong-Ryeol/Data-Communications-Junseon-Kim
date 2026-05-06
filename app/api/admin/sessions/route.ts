@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   // 코드 생성 — 충돌 시 재시도
   let code = '';
   for (let i = 0; i < 8; i++) {
-    const candidate = generateCode(6);
+    const candidate = generateCode();
     const ref = getAdminDb().collection('sessions').doc(candidate);
     const exists = await ref.get();
     if (!exists.exists) {
