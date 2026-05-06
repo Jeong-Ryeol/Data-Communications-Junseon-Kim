@@ -26,6 +26,7 @@ import {
   ThumbsUp,
   Sparkles,
   UserX,
+  Trash2,
 } from 'lucide-react';
 import CategoryPicker from '@/components/CategoryPicker';
 import QuestionCard from '@/components/QuestionCard';
@@ -154,6 +155,19 @@ export default function AdminSessionPage({
     });
   }
 
+  async function deleteSession() {
+    if (!session) return;
+    if (
+      !window.confirm(
+        `세션 "${session.title}"을(를) 영구 삭제할까요?\n\n• 모든 질문 / 투표 / 응답 데이터가 즉시 삭제됩니다.\n• 복구 불가능합니다.`,
+      )
+    )
+      return;
+    const r = await fetch(`/api/sessions/${id}`, { method: 'DELETE' });
+    if (r.ok) router.push('/admin');
+    else alert('삭제 실패');
+  }
+
   async function startPulsePoll() {
     await fetch('/api/polls', {
       method: 'POST',
@@ -279,6 +293,13 @@ export default function AdminSessionPage({
           )}
         >
           <Power className="size-3.5" /> {session.isOpen ? '종료' : '재개'}
+        </button>
+        <button
+          onClick={deleteSession}
+          className="inline-flex items-center gap-1 rounded-full bg-neutral-900 hover:bg-rose-500/15 ring-1 ring-neutral-800 hover:ring-rose-400/30 text-neutral-500 hover:text-rose-300 px-2.5 py-1.5 text-xs transition"
+          title="세션 영구 삭제"
+        >
+          <Trash2 className="size-3.5" />
         </button>
       </section>
 

@@ -46,3 +46,24 @@ export async function PATCH(
   await ref.update(updates);
   return NextResponse.json({ ok: true });
 }
+
+// DELETE: 세션 영구 삭제 (교수 전용)
+//  - 세션 doc + questions / polls / votes / pulse 서브컬렉션 모두 재귀 삭제
+//  - 복구 불가
+export async function DELETE(
+  _req: NextRequest,
+  ctx: RouteContext<'/api/sessions/[id]'>,
+) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  }
+  const { id } = await ctx.params;
+  const db = getAdminDb();
+  const ref = db.collection('sessions').doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    return NextResponse.json({ ok: false, error: 'not found' }, { status: 404 });
+  }
+  await db.recursiveDelete(ref);
+  return NextResponse.json({ ok: true });
+}

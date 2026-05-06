@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, Plus, Clock, LogOut } from 'lucide-react';
+import { Lock, Plus, Clock, LogOut, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatTime } from '@/lib/utils';
 import type { SessionDoc } from '@/lib/types';
@@ -175,10 +175,10 @@ export default function AdminPage() {
         ) : (
           <ul className="flex flex-col gap-2">
             {sessions.map((s) => (
-              <li key={s.id}>
+              <li key={s.id} className="flex items-stretch gap-2">
                 <a
                   href={`/admin/session/${s.id}`}
-                  className="block rounded-xl bg-neutral-900/40 hover:bg-neutral-900 border border-neutral-800 px-4 py-3 transition"
+                  className="flex-1 block rounded-xl bg-neutral-900/40 hover:bg-neutral-900 border border-neutral-800 px-4 py-3 transition"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -203,6 +203,24 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </a>
+                <button
+                  onClick={async () => {
+                    if (
+                      !window.confirm(
+                        `세션 "${s.title}"을(를) 영구 삭제할까요?\n\n• 모든 질문 / 투표 / 응답 데이터가 즉시 삭제됩니다.\n• 복구 불가능합니다.`,
+                      )
+                    )
+                      return;
+                    const r = await fetch(`/api/sessions/${s.id}`, { method: 'DELETE' });
+                    if (r.ok) refresh();
+                    else alert('삭제 실패');
+                  }}
+                  className="shrink-0 rounded-xl bg-neutral-900/40 hover:bg-rose-500/15 border border-neutral-800 hover:border-rose-400/30 px-3 text-neutral-500 hover:text-rose-300 transition"
+                  aria-label="세션 삭제"
+                  title="세션 삭제"
+                >
+                  <Trash2 className="size-4" />
+                </button>
               </li>
             ))}
           </ul>

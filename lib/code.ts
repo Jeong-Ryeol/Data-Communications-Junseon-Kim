@@ -1,7 +1,8 @@
-// 0/O/1/I/L 제외 — 혼동 글자 제거
-const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+// 3자리 숫자 코드 (000~999, 1000 조합)
+const ALPHABET = '0123456789';
+const CODE_LENGTH = 3;
 
-export function generateCode(length = 6): string {
+export function generateCode(length = CODE_LENGTH): string {
   let s = '';
   for (let i = 0; i < length; i++) {
     s += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
@@ -10,11 +11,9 @@ export function generateCode(length = 6): string {
 }
 
 export function normalizeCode(input: string): string {
-  return input.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return input.replace(/[^0-9]/g, '');
 }
 
 export function isValidCode(s: string): boolean {
-  if (!/^[A-Z0-9]{6}$/.test(s)) return false;
-  for (const c of s) if (!ALPHABET.includes(c)) return false;
-  return true;
+  return /^[0-9]{3}$/.test(s);
 }

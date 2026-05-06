@@ -24,7 +24,7 @@ function HomeInner() {
     e.preventDefault();
     const norm = normalizeCode(code);
     if (!isValidCode(norm)) {
-      setError('영문/숫자 6자리예요');
+      setError('숫자 3자리예요');
       return;
     }
     router.push(`/session/${norm}`);
@@ -52,21 +52,20 @@ function HomeInner() {
               setCode(normalizeCode(e.target.value));
               setError(null);
             }}
-            inputMode="text"
-            autoCapitalize="characters"
+            inputMode="numeric"
             autoComplete="off"
             spellCheck={false}
-            placeholder="6자리 코드"
-            className="w-full text-center text-3xl tracking-[0.4em] font-mono uppercase bg-neutral-900/70 border border-neutral-800 rounded-2xl py-6 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition placeholder:text-neutral-700"
-            maxLength={6}
+            placeholder="3자리 숫자"
+            className="w-full text-center text-4xl tracking-[0.5em] font-mono bg-neutral-900/70 border border-neutral-800 rounded-2xl py-6 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition placeholder:text-neutral-700"
+            maxLength={3}
             aria-label="세션 코드"
           />
           {error && (
-            <p className="text-sm text-rose-400 text-center -mt-1">{error}</p>
+              <p className="text-sm text-rose-400 text-center -mt-1">{error}</p>
           )}
           <button
             type="submit"
-            disabled={code.length < 6}
+            disabled={code.length < 3}
             className="rounded-2xl bg-indigo-500 hover:bg-indigo-400 disabled:bg-neutral-800 disabled:text-neutral-500 active:scale-[0.98] transition py-4 text-lg font-medium"
           >
             입장
